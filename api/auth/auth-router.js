@@ -1,19 +1,41 @@
 const router = require("express").Router();
 const { checkUsernameExists, validateRoleName } = require('./auth-middleware');
 const { JWT_SECRET } = require("../secrets"); // use this secret!
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const model = require('../users/users-model')
 
-router.post("/register", validateRoleName, (req, res, next) => {
-  /**
-    [POST] /api/auth/register { "username": "anna", "password": "1234", "role_name": "angel" }
+/**
+  [POST] /api/auth/register { "username": "anna", "password": "1234", "role_name": "angel" }
 
-    response:
-    status 201
-    {
-      "user"_id: 3,
-      "username": "anna",
-      "role_name": "angel"
-    }
-   */
+  response:
+  status 201
+  {
+    "user"_id: 3,
+    "username": "anna",
+    "role_name": "angel"
+  }
+ */
+// router.post("/register", validateRoleName, (req, res, next) => {
+router.post("/register", (req, res) => {
+  let user = req.body
+
+  // Bcrypting(encoding) password before saving and Determining how many rounds 
+  const hash = bcrypt.hashSync(user.password, 9)
+  
+  // Setting password = to encrypted version
+  user.password = hash
+  
+  console.log(user)
+
+  model.add(user)
+  .then(results => {
+    res.status(201).json({ message: `Great to have you, ${results.username}` })
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: 'Internal Error' })
+  })
 });
 
 
